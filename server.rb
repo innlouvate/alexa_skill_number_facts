@@ -1,34 +1,9 @@
 require 'sinatra'
-require 'json'
-require 'net/http'
+require './lib/alexa/request'
+require './lib/alexa/response'
+require './lib/number_fact'
 
 post '/' do
-  parsed_request = JSON.parse(request.body.read)
-  number = parsed_request["request"]["intent"]["slots"]["Number"]["value"]
-  fact_type = parsed_request["request"]["intent"]["slots"]["FactType"]["value"]
-
-  number_facts_uri = URI("http://numbersapi.com/#{ number }/#{ fact_type }")
-  number_fact = Net::HTTP.get(number_facts_uri)
-
-  if (!number)
-    {
-      version: "1.0",
-      response: {
-        outputSpeech: {
-            type: "PlainText",
-            text: "Please format your question as, tell me about a math or trivia fact about a number"
-          }
-      }
-    }.to_json
-  else
-    {
-      version: "1.0",
-      response: {
-        outputSpeech: {
-            type: "PlainText",
-            text: number_fact
-          }
-      }
-    }.to_json
-  end
+  number_fact = NumberFact.build(Alexa::Request.new(request))
+  Alexa::Response.build(number_fact.text)
 end
